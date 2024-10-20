@@ -24,6 +24,7 @@ abstract class Person {
     public abstract String getDetails();
 }
 
+// Patient class extending Person
 class Patient extends Person {
     private String patientId;
 
@@ -47,6 +48,7 @@ class Patient extends Person {
     }
 }
 
+// Doctor class extending Person
 class Doctor extends Person {
     private String specialty;
 
@@ -70,10 +72,11 @@ class Doctor extends Person {
     }
 }
 
+// Appointment class to store appointments
 class Appointment {
-    private Patient patient;
-    private Doctor doctor;
-    private Date appointmentDate;
+    Patient patient;
+    Doctor doctor;
+    Date appointmentDate;
 
     public Appointment(Patient patient, Doctor doctor, Date appointmentDate) {
         this.patient = patient;
@@ -88,6 +91,7 @@ class Appointment {
     }
 }
 
+// Interface for hospital management functions
 interface HospitalManagement {
     void addPatient();
     void addDoctor();
@@ -96,6 +100,7 @@ interface HospitalManagement {
     void displayDoctors();
 }
 
+// Hospital class implementing the interface
 class Hospital implements HospitalManagement {
     private Person[] patients = new Patient[10]; // Using Person array for polymorphism
     private Person[] doctors = new Doctor[10];   // Using Person array for polymorphism
@@ -149,6 +154,7 @@ class Hospital implements HospitalManagement {
             System.out.println("Appointment list is full. Cannot schedule more appointments.");
             return;
         }
+
         System.out.print("Enter patient ID: ");
         String patientId = scanner.nextLine();
         Patient patient = null;
@@ -162,6 +168,7 @@ class Hospital implements HospitalManagement {
             System.out.println("Patient not found!");
             return;
         }
+
         System.out.print("Enter doctor's name: ");
         String doctorName = scanner.nextLine();
         Doctor doctor = null;
@@ -175,14 +182,16 @@ class Hospital implements HospitalManagement {
             System.out.println("Doctor not found!");
             return;
         }
-        System.out.print("Enter appointment date (yyyy-MM-dd): ");
+
+        System.out.print("Enter appointment date and time (yyyy-MM-dd HH:mm): ");
         String dateString = scanner.nextLine();
         try {
-            Date appointmentDate = new SimpleDateFormat("yyyy-MM-dd").parse(dateString);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            Date appointmentDate = sdf.parse(dateString);
             appointments[appointmentCount++] = new Appointment(patient, doctor, appointmentDate);
             System.out.println("Appointment scheduled successfully!");
         } catch (ParseException e) {
-            System.out.println("Invalid date format!");
+            System.out.println("Invalid date and time format!");
         }
     }
 
@@ -194,6 +203,58 @@ class Hospital implements HospitalManagement {
         for (int i = 0; i < appointmentCount; i++) {
             System.out.println(appointments[i]);
         }
+    }
+
+    public void cancelAppointment() {
+        System.out.print("Enter patient ID to cancel appointment: ");
+        String patientId = scanner.nextLine();
+        boolean found = false;
+        for (int i = 0; i < appointmentCount; i++) {
+            if (((Patient) appointments[i].patient).getPatientId().equals(patientId)) {
+                found = true;
+                System.out.println("Appointment cancelled: " + appointments[i]);
+                for (int j = i; j < appointmentCount - 1; j++) {
+                    appointments[j] = appointments[j + 1];
+                }
+                appointmentCount--;
+                break;
+            }
+        }
+        if (!found) {
+            System.out.println("No appointment found for the given patient ID.");
+        }
+    }
+
+    public void updatePatientInfo() {
+        System.out.print("Enter patient ID to update: ");
+        String patientId = scanner.nextLine();
+        Patient patient = null;
+
+        for (int i = 0; i < patientCount; i++) {
+            if (((Patient) patients[i]).getPatientId().equals(patientId)) {
+                patient = (Patient) patients[i];
+                break;
+            }
+        }
+
+        if (patient == null) {
+            System.out.println("Patient not found!");
+            return;
+        }
+
+        System.out.print("Enter new name (current: " + patient.getName() + "): ");
+        String newName = scanner.nextLine();
+        System.out.print("Enter new age (current: " + patient.getAge() + "): ");
+        int newAge = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        // Update patient details
+        patients[Arrays.asList(patients).indexOf(patient)] = new Patient(
+            newName.isEmpty() ? patient.getName() : newName,
+            newAge == 0 ? patient.getAge() : newAge,
+            patient.getPatientId()
+        );
+        System.out.println("Patient information updated successfully!");
     }
 
     @Override
@@ -224,15 +285,18 @@ public class HospitalManagementSystem {
         Hospital hospital = new Hospital();
         Scanner scanner = new Scanner(System.in);
         int choice;
+
         do {
             System.out.println("\nHospital Management System");
             System.out.println("1. Add Patient");
             System.out.println("2. Add Doctor");
             System.out.println("3. Schedule Appointment");
-            System.out.println("4. View Appointments");
-            System.out.println("5. Display Patients");
-            System.out.println("6. Display Doctors");
-            System.out.println("7. Exit");
+            System.out.println("4. Display Patients");
+            System.out.println("5. Display Doctors");
+            System.out.println("6. View Appointments");
+            System.out.println("7. Cancel Appointment");
+            System.out.println("8. Update Patient Info");
+            System.out.println("9. Exit");
             System.out.print("Enter your choice: ");
             choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
@@ -248,21 +312,28 @@ public class HospitalManagementSystem {
                     hospital.scheduleAppointment();
                     break;
                 case 4:
-                    hospital.viewAppointments();
-                    break;
-                case 5:
                     hospital.displayPatients();
                     break;
-                case 6:
+                case 5:
                     hospital.displayDoctors();
                     break;
+                case 6:
+                    hospital.viewAppointments();
+                    break;
                 case 7:
-                    System.out.println("Exiting the system...");
+                    hospital.cancelAppointment();
+                    break;
+                case 8:
+                    hospital.updatePatientInfo();
+                    break;
+                case 9:
+                    System.out.println("Exiting...");
                     break;
                 default:
                     System.out.println("Invalid choice! Please try again.");
             }
-        } while (choice != 7);
+        } while (choice != 9);
+
         scanner.close();
     }
 }
